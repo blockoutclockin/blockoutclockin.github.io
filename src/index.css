@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+/* =========================
+   Font: CMU Typewriter Text Regular
+   ========================= */
+@font-face {
+  font-family: "CMU Typewriter Text";
+  src:
+    local("CMU Typewriter Text"),
+    local("CMU Typewriter Text Regular"),
+    url("/fonts/cmu-typewriter-text-regular.woff2") format("woff2"),
+    url("/fonts/cmu-typewriter-text-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =========================
+   Optional Tailwind v4 tokens
+   ========================= */
+@theme {
+  --color-brand: #E30220;         /* Cadmium Red */
+  --color-brand-strong: #BF0000;  /* UE Red */
+  --color-ink: #F3F4F5;           /* Anti-Flash White */
+  --color-paper: #242024;         /* Raisin Black */
+  --color-border: #DDDDDD;        /* Gainsboro */
+}
+
+/* =========================
+   Global palette + semantic tokens
+   NOTE: Cadmium/UE set to green for your heatmap aesthetic.
+   ========================= */
+:root {
+  /* Named colors (your palette) */
+  --cadmium-red: #2CFF05;        /* currently green */
+  --ue-red: #2CFF05;             /* currently green */
+  --raisin-black: #000000;
+  --gainsboro: #ffffff;
+  --anti-flash-white: #F3F4F5;
+
+  /* Semantic tokens */
+  --bg: var(--raisin-black);
+  --fg: var(--anti-flash-white);
+  --link: var(--cadmium-red);
+  --link-hover: var(--ue-red);
+  --border: var(--gainsboro);
+
+  /* Tile hover background (used on task cards/list rows) */
+  --tile-hover: color-mix(in oklab, var(--cadmium-red) 14%, transparent);
+  /* Alternative neutral option:
+     --tile-hover: color-mix(in oklab, var(--gainsboro) 12%, transparent); */
+
+  /* Typography + rendering */
+  font-family: "CMU Typewriter Text", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+               "Liberation Mono", "DejaVu Sans Mono", monospace;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark; /* always dark */
+  color: var(--fg);
+  background-color: var(--bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure <body> also has the theme */
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  margin: 0;
+}
+
+/* =========================
+   Links
+   ========================= */
+a,
+a:visited {
+  font-weight: 700;
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover,
+a:focus-visible {
+  color: var(--link-hover);
+  text-decoration-thickness: 2px;
+}
+
+/* =========================
+   Headings
+   ========================= */
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* =========================
+   Buttons
+   ========================= */
+button {
+  border-radius: 8px;
+  border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit; /* CMU Typewriter */
+  background-color: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s, color 0.25s;
+}
+button:hover {
+  border-color: var(--border);
+}
+button:focus,
+button:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--link) 60%, transparent);
+  outline-offset: 2px;
+}
+
+/* =========================
+   Selection
+   ========================= */
+::selection {
+  background: color-mix(in oklab, var(--link) 35%, black);
+  color: var(--anti-flash-white);
+}
+
+/* =========================
+   Hoverable tiles helper (optional)
+   Apply class="hoverable-tile" to cards/rows if you don't
+   use Tailwind's hover:bg-[var(--tile-hover)] utility.
+   ========================= */
+.hoverable-tile {
+  transition: background-color 0.2s ease;
+}
+.hoverable-tile:hover {
+  background: var(--tile-hover);
+}
+
+/* =======================================================================
+   GitHub-style Yearly Heatmap
+   - Month and weekday labels
+   - Colors fully driven by CSS variables
+   ======================================================================= */
+:root {
+  /* Cell size + gaps */
+  --hm-size: 12px;
+  --hm-gap: 3px;
+
+  /* Color ramp (empty -> more) */
+  --hm-0: color-mix(in oklab, var(--gainsboro) 18%, transparent);   /* empty */
+  --hm-1: color-mix(in oklab, var(--cadmium-red) 25%, transparent);
+  --hm-2: color-mix(in oklab, var(--cadmium-red) 45%, transparent);
+  --hm-3: color-mix(in oklab, var(--cadmium-red) 70%, transparent);
+  --hm-4: color-mix(in oklab, var(--cadmium-red) 100%, transparent);
+
+  --hm-stroke: color-mix(in oklab, var(--cadmium-red) 80%, transparent);
+  --hm-empty-stroke: color-mix(in oklab, var(--border) 35%, transparent);
+
+  /* Left gutter for weekday labels */
+  --hm-gutter-left: 24px;
+}
+
+.gh-heatmap {
+  --cell: var(--hm-size);
+  --gap: var(--hm-gap);
+}
+
+/* Month labels row */
+.gh-months {
+  display: flex;
+  gap: var(--gap);
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.8;
+  margin-left: calc(var(--hm-gutter-left) + var(--gap));
+}
+
+/* Weekday labels column (Mon/Wed/Fri) */
+.gh-days {
+  width: var(--hm-gutter-left);
+  flex: 0 0 var(--hm-gutter-left);
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.8;
+  padding-top: 16px; /* align with month labels row */
+}
+.gh-days .row {
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--gap);
+}
+
+/* Weeks grid */
+.gh-grid {
+  display: inline-flex;  /* columns = weeks */
+  gap: var(--gap);
+}
+.gh-week {
+  display: flex;
+  flex-direction: column; /* rows = days (Sun..Sat) */
+  gap: var(--gap);
+}
+
+/* Cells */
+.gh-cell {
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+  border: 1px solid var(--hm-empty-stroke);
+  background: var(--hm-0);
+}
+
+/* Intensity modifiers */
+.gh-lvl-1 { background: var(--hm-1); border-color: var(--hm-stroke); }
+.gh-lvl-2 { background: var(--hm-2); border-color: var(--hm-stroke); }
+.gh-lvl-3 { background: var(--hm-3); border-color: var(--hm-stroke); }
+.gh-lvl-4 { background: var(--hm-4); border-color: var(--hm-stroke); }
+
+/* Legend chips reuse .gh-cell for consistent sizing */
+
+/* =========================
+   Dark theme form controls
+   (fix select dropdown contrast)
+   ========================= */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  background-color: var(--bg);
+  color: var(--fg);
+  border: 1px solid color-mix(in oklab, var(--border) 30%, transparent);
+}
+
+/* Native select: visible arrow + padding */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23F3F4F5' d='M5.5 7.5l4.5 4.5 4.5-4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 12px;
+}
+
+/* Ensure dropdown list items are readable across browsers */
+select option {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* Placeholder/disabled option is dimmer */
+select option[disabled],
+select option[value=""] {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Better focus ring */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 3px solid color-mix(in oklab, var(--link) 60%, transparent);
+  outline-offset: 2px;
+  border-color: var(--border);
+}
+
+/* Hint some UAs to render popups in dark mode */
+select { color-scheme: dark; }
