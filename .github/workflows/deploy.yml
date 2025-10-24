@@ -25,7 +25,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      # debug to verify the build contains /assets, not /src
+      # 🔎 add debug so you can verify the build contains /assets, not /src
       - name: Show dist contents
         run: |
           echo "==== dist/ ===="
