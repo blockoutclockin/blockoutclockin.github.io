@@ -7,6 +7,17 @@
     <link href="/src/index.css" rel="stylesheet">
     <title>clockedin</title>
   </head>
+
+  <script>
+    (function () {
+      var r = sessionStorage.redirect;
+      if (r) {
+        history.replaceState(null, null, r);
+        sessionStorage.removeItem("redirect");
+      }
+    })();
+  </script>
+  
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

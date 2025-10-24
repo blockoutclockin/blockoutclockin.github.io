@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      // Redirect 404s to app root, but preserve path/query/hash.
+      var base = "/"; // org site root
+      sessionStorage.redirect = location.pathname + location.search + location.hash;
+      location.replace(base);
+    </script>
+  </head>
+  <body></body>
+</html>

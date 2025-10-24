@@ -10,23 +10,25 @@ import Terms from "./components/Terms";
 import PrivateRoute from "./components/PrivateRoute";
 import AuthedLayout from "./components/AuthedLayout";
 
-export const router = createBrowserRouter([
-  { path: "/", element: <App /> },
-  { path: "/signup", element: <Signup /> },
-  { path: "/signin", element: <Signin /> },
-  { path: "/privacy", element: <Privacy /> },  // <— public
-  { path: "/terms", element: <Terms /> },      // <— public
-
-  {
-    element: (
-      <PrivateRoute>
-        <AuthedLayout />
-      </PrivateRoute>
-    ),
-    children: [
-      { path: "/dashboard", element: <Dashboard /> },
-      { path: "/history", element: <History /> },
-      { path: "/tasks", element: <Tasks /> },
-    ],
-  },
-]);
+export const router = createBrowserRouter(
+  [
+    { path: "/", element: <App /> },
+    { path: "/signup", element: <Signup /> },
+    { path: "/signin", element: <Signin /> },
+    { path: "/privacy", element: <Privacy /> },
+    { path: "/terms", element: <Terms /> },
+    {
+      element: (
+        <PrivateRoute>
+          <AuthedLayout />
+        </PrivateRoute>
+      ),
+      children: [
+        { path: "/dashboard", element: <Dashboard /> },
+        { path: "/history", element: <History /> },
+        { path: "/tasks", element: <Tasks /> },
+      ],
+    },
+  ],
+  { basename: import.meta.env.BASE_URL }
+);
