@@ -43,7 +43,7 @@ const PublicNavbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)] text-[var(--fg)]">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Brand as plain <p>: b[lock]outc[lock]in with green "lock" */}
-        <p className="font-bold tracking-wide flex items-center gap-0.5" aria-label="blockoutclockin">
+        <p className="font-bold tracking-wide flex items-center gap-0.5" aria-label="locknclock">
           lock<span className="text-[var(--cadmium-red)]">n</span>clock 
         </p>
 
