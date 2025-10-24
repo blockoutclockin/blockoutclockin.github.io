@@ -8,7 +8,7 @@ const Terms = () => {
       <p className="opacity-80 mt-1 text-sm">Effective date: {effective}</p>
 
       <p className="mt-6">
-        These Terms of Service (“Terms”) govern your use of <strong>clockedin</strong> (the “Service”).
+        These Terms of Service (“Terms”) govern your use of <strong>locknclock</strong> (the “Service”).
         By using the Service, you agree to these Terms.
       </p>
 

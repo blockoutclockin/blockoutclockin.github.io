@@ -42,9 +42,7 @@ const Navbar = () => {
 
   // Close on outside click / Esc
   useEffect(() => {
-    const onDown = (e) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
+    const onDown = (e) => { if (e.key === 'Escape') setOpen(false); };
     const onClick = (e) => {
       if (!panelRef.current) return;
       if (!panelRef.current.contains(e.target)) setOpen(false);
@@ -62,8 +60,10 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)] text-[var(--fg)]">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        {/* Brand as plain <p> */}
-        <p className="font-bold tracking-wide">clockedin</p>
+        {/* Brand as plain <p>: b[lock]outc[lock]in with green "lock" */}
+        <p className="font-bold tracking-wide flex items-center gap-0.5" aria-label="blockoutclockin">
+          lock<span className="text-[var(--cadmium-red)]">n</span>clock 
+        </p>
 
         {/* Desktop nav */}
         <div className="hidden sm:flex items-center gap-3">

@@ -8,7 +8,7 @@ const Privacy = () => {
       <p className="opacity-80 mt-1 text-sm">Effective date: {effective}</p>
 
       <p className="mt-6">
-        This Privacy Policy explains how <strong>clockedin</strong> (“we”, “us”, “our”) collects,
+        This Privacy Policy explains how <strong>locknclock</strong> (“we”, “us”, “our”) collects,
         uses, and shares information about you when you use our website and services (the “Service”).
       </p>
 

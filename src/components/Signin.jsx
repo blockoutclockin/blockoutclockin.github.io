@@ -32,13 +32,13 @@ const Signin = () => {
       <main className="pt-20 px-4 text-[var(--fg)]">
         <div className="max-w-md mx-auto">
           <section className="border rounded-3xl p-6">
-            <h1 className="text-3xl font-bold">clockin now</h1>
-            <p className="opacity-80 text-sm mt-1">Sign in to continue.</p>
+            <h1 className="text-3xl font-bold">lock in. clock in.</h1>
+            <p className="opacity-80 text-sm mt-1">sign in to continue.</p>
 
             <form onSubmit={handleSignIn} className="mt-6 space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm mb-1 opacity-80">
-                  Email
+                  email.
                 </label>
                 <input
                   id="email"
@@ -53,7 +53,7 @@ const Signin = () => {
 
               <div>
                 <label htmlFor="password" className="block text-sm mb-1 opacity-80">
-                  Password
+                  password.
                 </label>
                 <input
                   id="password"
@@ -71,15 +71,15 @@ const Signin = () => {
                 disabled={loading}
                 className="w-full mt-2 border rounded-lg py-2 hover:border-[var(--border)] disabled:opacity-60"
               >
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? 'signing in…' : 'sign in.'}
               </button>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
 
               <p className="opacity-80 text-sm pt-2">
-                Don't have an account?{' '}
+                don't have an account?{' '}
                 <Link to="/signup" className="underline font-semibold">
-                  Sign up
+                  sign up
                 </Link>
                 .
               </p>
