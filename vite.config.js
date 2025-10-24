@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react()],
-  base: '/', // org site at https://blockoutclockin.github.io/
+  plugins: [
+    tailwindcss(),
+    react()
+  ],
+  base: '/'
 })
