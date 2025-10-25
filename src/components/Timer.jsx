@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { UserAuth } from '../context/AuthContext';
 import { formatDuration } from '../utils/format';
 
-const Timer = () => {
+const Timer = ({ onGuardChange }) => {
   const { session } = UserAuth();
   const userId = session?.user?.id;
 
@@ -35,6 +35,17 @@ const Timer = () => {
 
   const intervalRef = useRef(null);
   const taskRefs = useRef({}); // to set checkbox.indeterminate
+
+  // ========= NEW: notify dashboard to guard navigation when timing =========
+  useEffect(() => {
+    if (typeof onGuardChange === 'function') {
+      onGuardChange(isRunning || isPaused);
+    }
+    return () => {
+      if (typeof onGuardChange === 'function') onGuardChange(false);
+    };
+  }, [isRunning, isPaused, onGuardChange]);
+  // ========================================================================
 
   // Load ONLY active tasks, and for those tasks load ALL of their subtasks (active + completed)
   const loadTasks = async () => {

@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom';
 import { UserAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import Timer from './Timer';
+import LeaveGuard from './LeaveGuard'; // ← added
 
 const Dashboard = () => {
   const { session } = UserAuth();
   const userId = session?.user?.id;
+
+  // leave-warning: active when timer is running or paused
+  const [guardActive, setGuardActive] = useState(false); // ← added
 
   // -------------------------
   // Active tasks tile data
@@ -212,6 +216,8 @@ const Dashboard = () => {
   // -------------------------
   return (
     <div className="max-w-5xl mx-auto">
+      <LeaveGuard when={guardActive} /> {/* ← added */}
+
       {/* Header */}
       <section className="rounded-3xl p-6 border bg-[var(--bg)]">
         <h1 className="text-3xl font-bold">dashboard</h1>
@@ -225,7 +231,7 @@ const Dashboard = () => {
           <p className="opacity-80 text-sm mb-4">
             start the timer; do the work; then write what you accomplished.
           </p>
-          <Timer />
+          <Timer onGuardChange={setGuardActive} /> {/* ← only change to Timer usage */}
         </div>
       </section>
 
@@ -346,7 +352,7 @@ const Dashboard = () => {
 
           {!loadingHeatmap && (
             <>
-              {/* NEW: horizontal scroll wrapper to avoid overflow on small screens */}
+              {/* horizontal scroll wrapper to avoid overflow on small screens */}
               <div className="mt-4 overflow-x-auto">
                 <div className="w-max">
                   {/* Month labels */}
