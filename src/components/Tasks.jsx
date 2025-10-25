@@ -309,7 +309,7 @@ const Tasks = () => {
         <form onSubmit={addTask} className="flex flex-col sm:flex-row gap-3">
           <input
             className="flex-1 bg-transparent border rounded-lg p-3"
-            placeholder="Task title"
+            placeholder="task title"
             value={tTitle}
             onChange={(e) => setTTitle(e.target.value)}
           />

@@ -7,21 +7,26 @@ const Timer = () => {
   const { session } = UserAuth();
   const userId = session?.user?.id;
 
+  // Timer state
   const [isRunning, setIsRunning] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [startTime, setStartTime] = useState(null);   // last resume/start timestamp (ms)
+  const [firstStart, setFirstStart] = useState(null); // first start of this session (Date)
+  const [baseElapsed, setBaseElapsed] = useState(0);  // ms accumulated before current run
+  const [elapsed, setElapsed] = useState(0);          // live ms (baseElapsed + now - startTime while running)
 
+  // Review note
   const [needsNote, setNeedsNote] = useState(false);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Data
+  // Data for task selection
   const [tasks, setTasks] = useState([]);   // only ACTIVE tasks (completed_at IS NULL)
   const [subs, setSubs] = useState([]);     // all subtasks for those tasks (both active & completed)
   const [preCompletedSubs, setPreCompletedSubs] = useState(new Set()); // subtasks with completed_at != null
 
   // Selection for THIS session
-  const [selectedSubs, setSelectedSubs] = useState(new Set());           // subtask IDs chosen now
+  const [selectedSubs, setSelectedSubs] = useState(new Set());             // subtask IDs chosen now
   const [selectedNoSubTasks, setSelectedNoSubTasks] = useState(new Set()); // active tasks with NO subtasks chosen now
 
   // Saved popup
@@ -35,12 +40,11 @@ const Timer = () => {
   const loadTasks = async () => {
     if (!userId) return;
 
-    // Active tasks
     const { data: t, error: te } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', userId)
-      .is('completed_at', null)             // only active tasks
+      .is('completed_at', null)
       .order('created_at', { ascending: true });
 
     if (te) {
@@ -81,12 +85,15 @@ const Timer = () => {
 
   useEffect(() => { loadTasks(); /* eslint-disable-next-line */ }, [userId]);
 
+  // Tick while running
   useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => setElapsed(Date.now() - startTime), 250);
+    if (isRunning && startTime != null) {
+      intervalRef.current = setInterval(() => {
+        setElapsed(baseElapsed + (Date.now() - startTime));
+      }, 250);
     }
     return () => clearInterval(intervalRef.current);
-  }, [isRunning, startTime]);
+  }, [isRunning, startTime, baseElapsed]);
 
   const subsByTask = useMemo(() => {
     const m = new Map();
@@ -119,20 +126,45 @@ const Timer = () => {
     });
   }, [tasks, subsByTask, selectedSubs, preCompletedSubs]);
 
-  const handleStart = () => {
+  // --- Controls ---
+  const startNew = () => {
+    setFirstStart(new Date());
     setStartTime(Date.now());
+    setBaseElapsed(0);
     setElapsed(0);
     setIsRunning(true);
+    setIsPaused(false);
+
     setNeedsNote(false);
     setNote('');
     setSelectedSubs(new Set());
     setSelectedNoSubTasks(new Set());
   };
 
-  const handleStop = () => {
-    setIsRunning(false);
+  const resume = () => {
+    setStartTime(Date.now());
+    setIsRunning(true);
+    setIsPaused(false);
+  };
+
+  const handleStart = () => {
+    if (isPaused) return resume();
+    return startNew();
+  };
+
+  const handlePause = () => {
+    if (!isRunning) return;
     clearInterval(intervalRef.current);
-    setNeedsNote(true);
+    setIsRunning(false);
+    setIsPaused(true);
+    setBaseElapsed(elapsed); // lock in what we have so far
+  };
+
+  const handleStop = () => {
+    clearInterval(intervalRef.current);
+    setIsRunning(false);
+    setIsPaused(false);
+    setNeedsNote(true); // show review UI
   };
 
   // Clicking a TASK:
@@ -203,7 +235,6 @@ const Timer = () => {
         const t = taskById.get(s.task_id);
         groupsMap.set(s.task_id, { taskTitle: t?.title || '(Task)', subtasks: [] });
       }
-      // avoid duplicates in the list if a subtask was already completed
       if (!preCompletedSubs.has(sid)) {
         groupsMap.get(s.task_id).subtasks.push(s.title);
       }
@@ -221,11 +252,11 @@ const Timer = () => {
   };
 
   const handleSave = async () => {
-    if (!userId || !startTime) return;
+    if (!userId) return;
 
     const endedAt = new Date();
-    const startedAt = new Date(startTime);
-    const durationSeconds = Math.round((endedAt - startedAt) / 1000);
+    const startedAt = firstStart || new Date(endedAt.getTime() - elapsed);
+    const durationSeconds = Math.round(elapsed / 1000); // use accumulated time
 
     setSaving(true);
 
@@ -293,7 +324,7 @@ const Timer = () => {
       ended: endedAt,
       durationSeconds,
       note: note.trim(),
-      groups: buildSummaryGroups(), // [{ taskTitle, subtasks: [] }]
+      groups: buildSummaryGroups(),
     };
     setSavedInfo(summary);
     setShowSaved(true);
@@ -301,12 +332,16 @@ const Timer = () => {
     // 5) Refresh active tasks/subtasks so completed tasks disappear and newly-completed subtasks render struck-through
     await loadTasks();
 
-    // 6) Reset local selection
+    // 6) Reset local state for a fresh session
     setSaving(false);
     setNeedsNote(false);
     setNote('');
     setStartTime(null);
+    setFirstStart(null);
+    setBaseElapsed(0);
     setElapsed(0);
+    setIsRunning(false);
+    setIsPaused(false);
     setSelectedSubs(new Set());
     setSelectedNoSubTasks(new Set());
   };
@@ -321,18 +356,52 @@ const Timer = () => {
   return (
     <>
       <div className="mt-6 border rounded-2xl p-4 max-w-xl bg-[var(--bg)] text-[var(--fg)]">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="text-4xl font-bold tracking-wide">{timeStr}</div>
-          <div className="space-x-3">
-            {!isRunning && !needsNote && (
-              <button onClick={handleStart} className="px-4 py-2 border rounded-lg hover:border-[var(--border)]">
+
+          {/* Buttons: wrap on small screens */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isRunning && !isPaused && !needsNote && (
+              <button
+                onClick={handleStart}
+                className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+              >
                 Start
               </button>
             )}
-            {isRunning && (
-              <button onClick={handleStop} className="px-4 py-2 border rounded-lg hover:border-[var(--border)]">
-                Stop
-              </button>
+
+            {isRunning && !needsNote && (
+              <>
+                <button
+                  onClick={handlePause}
+                  className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+                >
+                  Pause
+                </button>
+                <button
+                  onClick={handleStop}
+                  className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+                >
+                  Stop
+                </button>
+              </>
+            )}
+
+            {isPaused && !needsNote && (
+              <>
+                <button
+                  onClick={handleStart} // resume
+                  className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+                >
+                  Resume
+                </button>
+                <button
+                  onClick={handleStop}
+                  className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+                >
+                  Stop
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -408,15 +477,18 @@ const Timer = () => {
               </div>
             </div>
 
-            <div className="mt-4 space-x-3">
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 border rounded-lg hover:border-[var(--border)] disabled:opacity-60"
+                className="px-4 py-2 border rounded-lg hover:border-[var(--border)] disabled:opacity-60 w-full sm:w-auto"
               >
                 {saving ? 'Saving…' : 'Save Entry'}
               </button>
-              <button onClick={handleCancel} className="px-4 py-2 border rounded-lg hover:border-[var(--border)]">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 border rounded-lg hover:border-[var(--border)] w-full sm:w-auto"
+              >
                 Cancel
               </button>
             </div>

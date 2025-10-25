@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [subs, setSubs] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [errorTasks, setErrorTasks] = useState(null);
+  const [expandedTaskId, setExpandedTaskId] = useState(null); // only one open at a time
 
   useEffect(() => {
     if (!userId) return;
@@ -228,7 +229,7 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Active tasks tile */}
+      {/* Active tasks tile (expand one at a time) */}
       <section className="mt-4">
         <div className="border rounded-3xl p-6">
           <div className="flex items-start justify-between gap-4">
@@ -249,14 +250,63 @@ const Dashboard = () => {
               {tasks.map((t) => {
                 const list = subsByTask.get(t.id) || [];
                 const remaining = list.filter(s => !s.completed_at).length;
+                const expanded = expandedTaskId === t.id;
+
                 return (
-                  <li key={t.id} className="flex items-center justify-between gap-3 p-3 border rounded-xl">
-                    <span className="font-medium">{t.title}</span>
-                    <span className="text-xs opacity-70 whitespace-nowrap">
-                      {remaining > 0
-                        ? `${remaining} subtask${remaining > 1 ? 's' : ''} left`
-                        : (list.length ? 'all subtasks complete' : 'no subtasks')}
-                    </span>
+                  <li key={t.id} className="border rounded-xl">
+                    {/* Row header: click to expand/collapse */}
+                    <button
+                      type="button"
+                      className="w-full p-3 flex items-center justify-between gap-3 text-left"
+                      onClick={() => setExpandedTaskId(expanded ? null : t.id)}
+                      aria-expanded={expanded}
+                      aria-controls={`task-panel-${t.id}`}
+                    >
+                      <div className="min-w-0 flex items-center gap-2">
+                        {/* caret */}
+                        <svg
+                          className={`shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path d="M7 6l6 4-6 4V6z" fill="currentColor" />
+                        </svg>
+                        <span className="font-medium truncate">{t.title}</span>
+                      </div>
+                      <span className="text-xs opacity-70 whitespace-nowrap">
+                        {remaining > 0
+                          ? `${remaining} subtask${remaining > 1 ? 's' : ''} left`
+                          : (list.length ? 'all subtasks complete' : 'no subtasks')}
+                      </span>
+                    </button>
+
+                    {/* Expandable panel (only one open at a time) */}
+                    {expanded && (
+                      <div
+                        id={`task-panel-${t.id}`}
+                        className="px-3 pb-3"
+                      >
+                        {!list.length ? (
+                          <p className="text-sm opacity-75">no subtasks yet.</p>
+                        ) : (
+                          <ul className="mt-2 ml-6 space-y-1">
+                            {list.map((s) => {
+                              const done = !!s.completed_at;
+                              return (
+                                <li key={s.id} className="flex items-center gap-2">
+                                  <input type="checkbox" checked={done} readOnly disabled className="opacity-70" />
+                                  <span className={done ? 'line-through opacity-70' : ''}>{s.title}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </li>
                 );
               })}
@@ -271,7 +321,6 @@ const Dashboard = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">activity in the last year</h2>
 
-            {/* Toggle */}
             <div className="flex items-center gap-2 text-sm">
               <button
                 onClick={() => setMode('hours')}
@@ -287,7 +336,7 @@ const Dashboard = () => {
                   mode === 'items' ? 'font-medium opacity-100' : 'opacity-80'
                 }`}
               >
-                items completed / day
+                tasks / day
               </button>
             </div>
           </div>
@@ -297,56 +346,60 @@ const Dashboard = () => {
 
           {!loadingHeatmap && (
             <>
-              {/* Month labels (width = number of week columns in the month) */}
-              <div className="gh-months mt-4">
-                {monthSegments.map((seg, i) => {
-                  // Each column width ≈ cell + gap
-                  const colWidth = `calc(var(--hm-size) + var(--hm-gap))`;
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        width: `calc((${colWidth}) * ${seg.weeks})`,
-                        minWidth: `calc((${colWidth}) * ${seg.weeks})`,
-                      }}
-                    >
-                      {seg.weeks >= 2 ? seg.label : '' /* avoid cramped labels for 1-column months */}
-                    </div>
-                  );
-                })}
-              </div>
+              {/* NEW: horizontal scroll wrapper to avoid overflow on small screens */}
+              <div className="mt-4 overflow-x-auto">
+                <div className="w-max">
+                  {/* Month labels */}
+                  <div className="gh-months">
+                    {monthSegments.map((seg, i) => {
+                      const colWidth = `calc(var(--hm-size) + var(--hm-gap))`;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: `calc((${colWidth}) * ${seg.weeks})`,
+                            minWidth: `calc((${colWidth}) * ${seg.weeks})`,
+                          }}
+                        >
+                          {seg.weeks >= 2 ? seg.label : ''}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-              <div className="mt-1 flex">
-                {/* Day labels */}
-                <div className="gh-days">
-                  {[0,1,2,3,4,5,6].map((d) => (
-                    <div key={d} className="row">
-                      {(d === 0 && 'Mon') || (d === 2 && 'Wed') || (d === 4 && 'Fri') || ''}
+                  <div className="mt-1 flex">
+                    {/* Day labels */}
+                    <div className="gh-days">
+                      {[0,1,2,3,4,5,6].map((d) => (
+                        <div key={d} className="row">
+                          {(d === 0 && 'Mon') || (d === 2 && 'Wed') || (d === 4 && 'Fri') || ''}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* Grid (weeks x days) */}
-                <div className="gh-grid">
-                  {weeks.map((week, wi) => (
-                    <div key={wi} className="gh-week">
-                      {week.map((d, di) => {
-                        const v = valueForDay(d);
-                        const lvl = levelForValue(v);
-                        const title =
-                          mode === 'hours'
-                            ? `${d.toLocaleDateString()}: ${v.toFixed(2)}h`
-                            : `${d.toLocaleDateString()}: ${v} item${v === 1 ? '' : 's'}`;
-                        return (
-                          <div
-                            key={di}
-                            className={`gh-cell ${lvl ? `gh-lvl-${lvl}` : ''}`}
-                            title={title}
-                          />
-                        );
-                      })}
+                    {/* Grid (weeks x days) */}
+                    <div className="gh-grid">
+                      {weeks.map((week, wi) => (
+                        <div key={wi} className="gh-week">
+                          {week.map((d, di) => {
+                            const v = valueForDay(d);
+                            const lvl = levelForValue(v);
+                            const title =
+                              mode === 'hours'
+                                ? `${d.toLocaleDateString()}: ${v.toFixed(2)}h`
+                                : `${d.toLocaleDateString()}: ${v} item${v === 1 ? '' : 's'}`;
+                            return (
+                              <div
+                                key={di}
+                                className={`gh-cell ${lvl ? `gh-lvl-${lvl}` : ''}`}
+                                title={title}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
 
