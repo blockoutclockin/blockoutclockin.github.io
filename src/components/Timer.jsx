@@ -274,6 +274,7 @@ const Timer = ({ onGuardChange }) => {
         user_id: userId,
         started_at: startedAt.toISOString(),
         ended_at: endedAt.toISOString(),
+        duration_seconds: durationSeconds,
         note: note.trim(),
       })
       .select()
