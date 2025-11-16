@@ -115,7 +115,7 @@ const TaskCard = ({
                 onReopenTask(task);
               }}
             >
-              Reopen
+              reopen
             </button>
           )}
         </div>
