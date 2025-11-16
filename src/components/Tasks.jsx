@@ -3,7 +3,8 @@ import { supabase } from '../supabaseClient';
 import { UserAuth } from '../context/AuthContext';
 
 /** Task card:
- *  - add multiple subtasks inline (no dropdown)
+ *  - add multiple subtasks inline (no dropdown) for active tasks
+ *  - for inactive tasks: subtasks are hidden in a dropdown until the task is clicked
  *  - edit subtasks inline (no delete)
  *  - checkbox to complete subtasks
  *  - mark-done for tasks with no subtasks
@@ -26,6 +27,9 @@ const TaskCard = ({
 
   const hasSubs = subs.length > 0;
 
+  // For inactive tasks, start collapsed; for active tasks, always "open"
+  const [isOpen, setIsOpen] = useState(!isInactive);
+
   const startEdit = (sub) => {
     setEditingId(sub.id);
     setEditValue(sub.title);
@@ -41,82 +45,110 @@ const TaskCard = ({
     setEditingId(null);
   };
 
+  // When a card is used in a different context (e.g. becomes active),
+  // make sure it shows its subtasks.
+  useEffect(() => {
+    if (!isInactive) {
+      setIsOpen(true);
+    }
+  }, [isInactive]);
+
   return (
     <div className="p-4 border rounded-2xl">
       {/* Stack on mobile; split on sm+; prevent overflow with min-w-0/shrink-0 */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         {/* Left: content */}
         <div className="min-w-0 flex-1">
-          <div className="font-semibold break-words">{task.title}</div>
-
-          {/* Subtasks list */}
-          {hasSubs ? (
-            <ul className="mt-2 space-y-1">
-              {subs.map((s) => {
-                const isEditing = editingId === s.id;
-                return (
-                  <li key={s.id} className="flex flex-wrap items-center gap-2">
-                    {/* checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={!!s.completed_at}
-                      onChange={() => onToggleSubtaskDone(s)}
-                      className="shrink-0"
-                    />
-
-                    {/* title or editor */}
-                    {isEditing ? (
-                      <input
-                        autoFocus
-                        className="flex-1 min-w-0 bg-transparent border rounded-lg p-1 px-2"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveEdit(s);
-                          if (e.key === 'Escape') setEditingId(null);
-                        }}
-                      />
-                    ) : (
-                      <span
-                        className={`flex-1 min-w-0 break-words ${s.completed_at ? 'opacity-70 line-through' : ''}`}
-                        title={s.title}
-                      >
-                        {s.title}
-                      </span>
-                    )}
-
-                    {/* controls (wrap on small) */}
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
-                          onClick={() => saveEdit(s)}
-                        >
-                          save
-                        </button>
-                        <button
-                          className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
-                          onClick={() => setEditingId(null)}
-                        >
-                          cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
-                          onClick={() => startEdit(s)}
-                        >
-                          edit
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+          {/* Header: clickable for inactive (dropdown), static for active */}
+          {isInactive ? (
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between gap-2 text-left"
+            >
+              <span className="font-semibold break-words">{task.title}</span>
+              <span className="text-xs opacity-70">
+                {isOpen ? '▴ hide subtasks' : '▾ show subtasks'}
+              </span>
+            </button>
           ) : (
-            <p className="mt-2 text-sm opacity-70">no subtasks</p>
+            <div className="font-semibold break-words">{task.title}</div>
+          )}
+
+          {/* Subtasks list (for inactive: only when open) */}
+          {( !isInactive || isOpen ) && (
+            <>
+              {hasSubs ? (
+                <ul className="mt-2 space-y-1">
+                  {subs.map((s) => {
+                    const isEditing = editingId === s.id;
+                    return (
+                      <li key={s.id} className="flex flex-wrap items-center gap-2">
+                        {/* checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={!!s.completed_at}
+                          onChange={() => onToggleSubtaskDone(s)}
+                          className="shrink-0"
+                        />
+
+                        {/* title or editor */}
+                        {isEditing ? (
+                          <input
+                            autoFocus
+                            className="flex-1 min-w-0 bg-transparent border rounded-lg p-1 px-2"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveEdit(s);
+                              if (e.key === 'Escape') setEditingId(null);
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className={`flex-1 min-w-0 break-words ${
+                              s.completed_at ? 'opacity-70 line-through' : ''
+                            }`}
+                            title={s.title}
+                          >
+                            {s.title}
+                          </span>
+                        )}
+
+                        {/* controls (wrap on small) */}
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
+                              onClick={() => saveEdit(s)}
+                            >
+                              save
+                            </button>
+                            <button
+                              className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
+                              onClick={() => setEditingId(null)}
+                            >
+                              cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              className="px-2 py-1 border rounded-md hover:border-[var(--border)]"
+                              onClick={() => startEdit(s)}
+                            >
+                              edit
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm opacity-70">no subtasks</p>
+              )}
+            </>
           )}
 
           {/* Add subtask (active tasks only) */}
@@ -187,8 +219,16 @@ const Tasks = () => {
     setLoading(true);
     setErr(null);
     const [{ data: t, error: te }, { data: s, error: se }] = await Promise.all([
-      supabase.from('tasks').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
-      supabase.from('subtasks').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('subtasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true }),
     ]);
     if (te || se) setErr(te?.message || se?.message);
     setTasks(t || []);
@@ -196,7 +236,10 @@ const Tasks = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadAll(); /* eslint-disable-line */ }, [userId]);
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const subsByTask = useMemo(() => {
     const m = new Map();
