@@ -225,42 +225,38 @@ const Timer = ({ onGuardChange }) => {
   const buildSummaryGroups = () => {
     const taskById = new Map(tasks.map(t => [t.id, t]));
     const subById = new Map(subs.map(s => [s.id, s]));
-    const groupsMap = new Map(); // taskId -> { taskTitle, subtasks: [subTitle...] }
+    const groupsMap = new Map();
 
-    // Pre-completed subtasks (for display only)
-    preCompletedSubs.forEach(sid => {
+    selectedSubs.forEach((sid) => {
       const s = subById.get(sid);
       if (!s) return;
+
       if (!groupsMap.has(s.task_id)) {
         const t = taskById.get(s.task_id);
-        groupsMap.set(s.task_id, { taskTitle: t?.title || '(Task)', subtasks: [] });
+        groupsMap.set(s.task_id, {
+          taskTitle: t?.title || '(Task)',
+          subtasks: [],
+        });
       }
+
       groupsMap.get(s.task_id).subtasks.push(s.title);
     });
 
-    // Newly selected subtasks
-    selectedSubs.forEach(sid => {
-      const s = subById.get(sid);
-      if (!s) return;
-      if (!groupsMap.has(s.task_id)) {
-        const t = taskById.get(s.task_id);
-        groupsMap.set(s.task_id, { taskTitle: t?.title || '(Task)', subtasks: [] });
-      }
-      if (!preCompletedSubs.has(sid)) {
-        groupsMap.get(s.task_id).subtasks.push(s.title);
-      }
-    });
-
-    // Tasks with no subtasks (selected now)
-    selectedNoSubTasks.forEach(tid => {
+    selectedNoSubTasks.forEach((tid) => {
       if (!groupsMap.has(tid)) {
         const t = taskById.get(tid);
-        groupsMap.set(tid, { taskTitle: t?.title || '(Task)', subtasks: [] });
+        if (!t) return;
+
+        groupsMap.set(tid, {
+          taskTitle: t.title || '(Task)',
+          subtasks: [],
+        });
       }
     });
 
     return Array.from(groupsMap.values());
   };
+
 
   const handleSave = async () => {
     if (!userId) return;
